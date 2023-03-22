@@ -1,6 +1,5 @@
 import discord
 from Materia import Materia
-from Prova import Prova
 from discord.ext import commands
 import json
 from dotenv import dotenv_values
@@ -23,6 +22,10 @@ async def on_message(message):
         materia = message.content.split('>AddMateria')[1]
         materia = materia.split(' ')[1]
         materiaObj = Materia(materia)
+        tem = Materia.buscarMateria(lista_materias, materiaObj)
+        if tem:
+            await message.channel.send("Matéria Já existe")
+            return
         lista_materias.append(materiaObj)
         await message.channel.send(f"Materia: {materia} adicionado com sucesso")
     if message.content.startswith('>AddProva'):
@@ -32,6 +35,7 @@ async def on_message(message):
                 "nomeProva": "tal",
                 "unidade": 1,2 ou 3,
                 "data": "tal",
+                "notaProva": 7.0
             }
         '''
         print(lista_materias)
@@ -42,9 +46,9 @@ async def on_message(message):
             await message.channel.send("Materia informada não existe")
             return
 
-        operacaoConcluida = materia.adicionarProva(msgDict['unidade'], msgDict['data'], msgDict['nomeProva'])
-        if not operacaoConcluida:
-            await message.channel.send("Prova informada já existe")
+        operacaoConcluida = materia.adicionarProva(msgDict['unidade'], msgDict['data'], msgDict['nomeProva'], msgDict['notaProva'])
+        if not operacaoConcluida[0]:
+            await message.channel.send(operacaoConcluida[1])
             return
         await message.channel.send("Prova adicionada com sucesso")
 
@@ -63,8 +67,8 @@ async def on_message(message):
             await message.channel.send("Materia informada não existe")
             return
         operacaoConcluida = materia.adicionarConteudoNumaProva(msgDict['conteudos'], msgDict['nomeProva'])
-        if not operacaoConcluida:
-            await message.channel.send("Prova informada nao existe existe")
+        if not operacaoConcluida[0]:
+            await message.channel.send(operacaoConcluida[1])
             return
         await message.channel.send("Conteudos Adicionado com sucesso")
     if message.content.startswith('>PrintarProvas'):
