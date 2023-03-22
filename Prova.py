@@ -1,13 +1,18 @@
 class Prova:
-    def __init__(self,data:str, unidade: str) -> None:
+    def __init__(self, unidade: str, data: str, nomeProva: str) -> None:
         self.unidade: str = unidade
         self.data: str = data
-        self.conteudos: list[str] | list | None = [] | None
+        self.nomeProva: str = nomeProva
+        self.conteudos: list[str] = []
     
     def adicionarConteudo(self, conteudo: str):
-        self.conteudos.append(conteudo)
-        return True
+        conteudoSplitado = conteudo.split(',')
+        conteudoSplitado.remove('')
+        self.conteudos.extend(conteudoSplitado)
     
     def removerConteudo(self, conteudo: str):
         self.conteudos.remove(conteudo)
+    
+    def printarProva(self):
+        pass
         
