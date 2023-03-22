@@ -7,12 +7,20 @@ class Prova:
     
     def adicionarConteudo(self, conteudo: str):
         conteudoSplitado = conteudo.split(',')
-        conteudoSplitado.remove('')
+        
         self.conteudos.extend(conteudoSplitado)
     
     def removerConteudo(self, conteudo: str):
         self.conteudos.remove(conteudo)
     
     def printarProva(self):
-        pass
+        msg = ''
+        msg += ('—————————————————\n')
+        msg += (f'Unidade {self.unidade}\n')
+        msg += (f'NomeProva: {self.nomeProva}\n')
+        msg += (f'**Data**: {self.data}\n')
+        for conteudo in self.conteudos:
+            msg += (f'\t**->{conteudo}**\n')
+        return msg
+
         

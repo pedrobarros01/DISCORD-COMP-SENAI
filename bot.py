@@ -58,17 +58,18 @@ async def on_message(message):
         '''
         msg = message.content.split('>AddConteudo')[1]
         msgDict = json.loads(msg)
-        materia = Materia.buscarMateria(lista_materias, materia['materia'])
+        materia = Materia.buscarMateria(lista_materias, msgDict['materia'])
         if not materia:
             await message.channel.send("Materia informada não existe")
             return
-        operacaoConcluida = materia.adicionarConteudoNumaProva(msgDict['conteudo'], msgDict['nomeProva'])
+        operacaoConcluida = materia.adicionarConteudoNumaProva(msgDict['conteudos'], msgDict['nomeProva'])
         if not operacaoConcluida:
             await message.channel.send("Prova informada nao existe existe")
             return
         await message.channel.send("Conteudos Adicionado com sucesso")
     if message.content.startswith('>PrintarProvas'):
-        pass
+        msg = Materia.printarMaterias(lista_materias)
+        await message.channel.send(msg)
     '''if message.content.startswith('>miguez'):
         comp = bot.get_guild()
         miguez = comp.get_member()

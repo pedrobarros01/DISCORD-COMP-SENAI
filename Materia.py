@@ -17,6 +17,16 @@ class Materia:
             if mat.nomeMateria.lower() == materia.lower():
                 return mat
         return None
+    @classmethod
+    def printarMaterias(cls, materias: list[Self]):
+        msg = ''
+        for mat in materias:
+            msg += ('**====================================================**\n')
+            msg += (f"**{mat.nomeMateria}**\n")
+            for prova in mat.provas:
+                msg += prova.printarProva()
+            msg += ('**====================================================**\n')
+            return msg
 
     def __procurarProva(self, nomeProva: str):
         for provinha in self.provas:
@@ -42,9 +52,8 @@ class Materia:
         prova.adicionarConteudo(conteudo)
         return True
 
-    def printarProva(self):
+    
         
-        pass
     
     
     
