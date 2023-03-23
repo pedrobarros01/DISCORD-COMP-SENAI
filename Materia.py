@@ -44,7 +44,7 @@ class Materia:
             return (False, "Nota precisa estar entre 0 e 10")
         prova = Prova(unidade, data, nomeProva, notaProva)
         self.provas.append(prova)
-        return True
+        return (True, "Adicionado com sucesso")
 
     def adicionarConteudoNumaProva(self, conteudo: str,  nomeProva: str):
         if conteudo.find(',') == -1:
