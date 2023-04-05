@@ -208,14 +208,29 @@ async def on_message(message):
             await message.channel.send(mensagem)
             return
         await message.channel.send(mensagem)
+    
+    if message.content.startswith('>RemoverTodasAsProvas'):
+        strPerguntas, opcoesAtuais = perguntaMateria()
+        resposta = await perguntar(message, strPerguntas, opcoesAtuais)
+        materiaAtual = unicode_to_number(resposta)
+        materiaObj = lista_materias[int(materiaAtual)]
+        req, msg = materiaObj.removerTodasAsProvas()
+        if not req:
+            await message.channel.send(msg)
+            return
+        await message.channel.send(msg)
 
+    if message.content.startswith('>Miguez'):
+        comp = bot.get_guild(677252577611612170)
+        miguez = comp.get_member(204386578414436352)
+        await message.channel.send(f'{miguez.mention} podre!')
 
     if message.content.startswith('>PrintarProvas'):
         msg = Materia.printarMaterias(lista_materias)
         await message.channel.send(msg)
     '''if message.content.startswith('>miguez'):
-        comp = bot.get_guild()
-        miguez = comp.get_member()
+        comp = bot.get_guild(991739407314984990)
+        miguez = comp.get_member(796901549506166864)
         await miguez.kick()'''
 
 bot.run(config['TOKEN'])

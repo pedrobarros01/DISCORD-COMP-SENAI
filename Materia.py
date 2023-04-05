@@ -42,8 +42,6 @@ class Materia:
             else:
                 cont += 1
         
-            
-
     def adicionarProva(self, unidade: int, data: str, nomeProva: str, notaProva: float):
         if unidade < 1 or unidade > 3:
             return (False, "Unidade fora do range")
@@ -81,6 +79,8 @@ class Materia:
             if not teste[0]:
                 return False, "Nao conseguimos remover as provas"
         return True, "Todas as provas removidas com sucesso"
+    
+    
 
     
         

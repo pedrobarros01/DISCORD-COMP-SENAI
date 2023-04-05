@@ -13,6 +13,10 @@ class Prova:
     def removerConteudo(self, conteudo: str):
         self.conteudos.remove(conteudo)
     
+    def editarConteudo(self, conteudos: list[str]):
+        self.conteudos = conteudos
+
+    
     def printarProva(self):
         msg = ''
         msg += ('—————————————————\n')
