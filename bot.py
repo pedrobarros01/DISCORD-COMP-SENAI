@@ -9,6 +9,17 @@ intents = discord.Intents.all()
 bot = commands.Bot(">", intents=intents)
 lista_materias: list[Materia] = []
 
+def removerMateria():
+    
+    pass
+
+def emoji_to_boolean(emoji):
+    match emoji:
+        case '👍':
+            return True
+        case _:
+            return False
+
 def unicode_to_number(texto):
     match texto:
         case "0️⃣":
@@ -33,8 +44,33 @@ def unicode_to_number(texto):
             return 9
         case "🔟":
             return 10
+
+def perguntaMateria():
+    strPerguntas = ''
         
+    emojis = ["0️⃣","1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣","8️⃣","9️⃣","🔟"]
+    opcoesAtuais = []
         
+    for i, mat in enumerate(lista_materias):
+        strPerguntas += f'{emojis[i]} - {mat.nomeMateria}\n'
+        opcoesAtuais.append(emojis[i])
+    return strPerguntas, opcoesAtuais
+        
+async def perguntarConteudo(message):
+    manterPergunta = True
+    listaConteudos: list[str] = []
+    while manterPergunta:
+        resposta = await perguntar(message, "Deseja adicionar um novo conteudo")
+        deseja = emoji_to_boolean(resposta)
+        if deseja:
+            respostaConteudo = await perguntar_texto(message, "Adicione um novo Conteudo entao:")
+            listaConteudos.append(respostaConteudo)
+        else:
+            manterPergunta = False
+    
+    return listaConteudos
+
+
 
 async def perguntar(mensagem, nome, opcoes: tuple[str]=('👍', '👎')):
     message = mensagem
@@ -101,14 +137,7 @@ async def on_message(message):
             }
         '''
         
-        strPerguntas = ''
-        
-        emojis = ["0️⃣","1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣","8️⃣","9️⃣","🔟"]
-        opcoesAtuais = []
-        
-        for i, mat in enumerate(lista_materias):
-            strPerguntas += f'{emojis[i]} - {mat.nomeMateria}\n'
-            opcoesAtuais.append(emojis[i])
+        strPerguntas, opcoesAtuais = perguntaMateria()
         resposta = await perguntar(message, strPerguntas, opcoesAtuais)
         materiaAtual = unicode_to_number(resposta)
         print(materiaAtual)
@@ -155,17 +184,32 @@ async def on_message(message):
                 "conteudos": "tal,tal,tal,tal"
             }
         '''
-        msg = message.content.split('>AddConteudo')[1]
-        msgDict = json.loads(msg)
-        materia = Materia.buscarMateria(lista_materias, msgDict['materia'])
-        if not materia:
-            await message.channel.send("Materia informada não existe")
-            return
-        operacaoConcluida = materia.adicionarConteudoNumaProva(msgDict['conteudos'], msgDict['nomeProva'])
+        strPerguntas, opcoesAtuais = perguntaMateria()
+        resposta = await perguntar(message, strPerguntas, opcoesAtuais)
+        materiaAtual = unicode_to_number(resposta)
+        materiaObj = lista_materias[int(materiaAtual)]
+        nomeProva = await perguntar_texto(message, "Por favor, indique o nome da prova")
+        conteudos = await perguntarConteudo(message)
+        conteudosFormatado = ','.join(conteudos)
+        operacaoConcluida = materiaObj.adicionarConteudoNumaProva(conteudosFormatado, nomeProva)
         if not operacaoConcluida[0]:
             await message.channel.send(operacaoConcluida[1])
             return
-        await message.channel.send("Conteudos Adicionado com sucesso")
+        await message.channel.send(operacaoConcluida[1])
+    
+    if message.content.startswith('>RemoverProva'):
+        strPerguntas, opcoesAtuais = perguntaMateria()
+        resposta = await perguntar(message, strPerguntas, opcoesAtuais)
+        materiaAtual = unicode_to_number(resposta)
+        materiaObj = lista_materias[int(materiaAtual)]
+        nomeProva = await perguntar_texto(message, "Por favor, indique o nome da prova")
+        teste, mensagem = materiaObj.removerProva(nomeProva)
+        if not teste:
+            await message.channel.send(mensagem)
+            return
+        await message.channel.send(mensagem)
+
+
     if message.content.startswith('>PrintarProvas'):
         msg = Materia.printarMaterias(lista_materias)
         await message.channel.send(msg)

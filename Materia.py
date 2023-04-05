@@ -33,6 +33,16 @@ class Materia:
             if provinha.nomeProva.lower() == nomeProva.lower():
                 return provinha
         return None
+    
+    def _procurarIndexProva(self, nomeProva: str):
+        cont = 0        
+        for provinha in self.provas:
+            if provinha.nomeProva.lower() == nomeProva.lower():
+                return cont
+            else:
+                cont += 1
+        
+            
 
     def adicionarProva(self, unidade: int, data: str, nomeProva: str, notaProva: float):
         if unidade < 1 or unidade > 3:
@@ -54,7 +64,28 @@ class Materia:
             return (False, "Prova não existe no armazenamento do sistema")
 
         prova.adicionarConteudo(conteudo)
-        return True
+        return (True, "Conteudos Adicionado com sucesso")
+
+    def removerProva(self, nomeProva: str):
+        prova = self.__procurarProva(nomeProva)
+        if not prova:
+            return(False, "Prova nao existe")
+        index = self._procurarIndexProva(nomeProva)
+        self.provas.pop(index)
+        return (True, "Prova removida com sucesso")
+    
+    def removerTodasAsProvas(self):
+        aux = self.provas.copy()
+        for provAux in aux:
+            teste = self.removerProva(provAux.nomeProva)
+            if not teste[0]:
+                return False, "Nao conseguimos remover as provas"
+        return True, "Todas as provas removidas com sucesso"
+
+    
+        
+    
+
 
     
         
