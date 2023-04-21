@@ -28,12 +28,14 @@ class Materia:
             msg += ('**====================================================**\n')
         return msg
 
-    def __procurarProva(self, nomeProva: str):
+    def procurarProva(self, nomeProva: str):
         for provinha in self.provas:
             if provinha.nomeProva.lower() == nomeProva.lower():
                 return provinha
         return None
     
+    
+
     def _procurarIndexProva(self, nomeProva: str):
         cont = 0        
         for provinha in self.provas:
@@ -45,7 +47,7 @@ class Materia:
     def adicionarProva(self, unidade: int, data: str, nomeProva: str, notaProva: float):
         if unidade < 1 or unidade > 3:
             return (False, "Unidade fora do range")
-        tem = self.__procurarProva(nomeProva)
+        tem = self.procurarProva(nomeProva)
         if tem:
             return (False, "Já existe essa prova")
         if notaProva < 0 or notaProva > 10:
@@ -57,7 +59,7 @@ class Materia:
     def adicionarConteudoNumaProva(self, conteudo: str,  nomeProva: str):
         if conteudo.find(',') == -1:
             return (False, "Formatação de conteudos esta errada, Precisa separar por (,)")
-        prova = self.__procurarProva(nomeProva)
+        prova = self.procurarProva(nomeProva)
         if not prova:
             return (False, "Prova não existe no armazenamento do sistema")
 
@@ -65,7 +67,7 @@ class Materia:
         return (True, "Conteudos Adicionado com sucesso")
 
     def removerProva(self, nomeProva: str):
-        prova = self.__procurarProva(nomeProva)
+        prova = self.procurarProva(nomeProva)
         if not prova:
             return(False, "Prova nao existe")
         index = self._procurarIndexProva(nomeProva)

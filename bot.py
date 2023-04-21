@@ -20,6 +20,10 @@ def emoji_to_boolean(emoji):
         case _:
             return False
 
+def emoji_to_att(emoji):
+    
+    pass
+
 def unicode_to_number(texto):
     match texto:
         case "0️⃣":
@@ -55,7 +59,29 @@ def perguntaMateria():
         strPerguntas += f'{emojis[i]} - {mat.nomeMateria}\n'
         opcoesAtuais.append(emojis[i])
     return strPerguntas, opcoesAtuais
-        
+
+def pegarIndiceMateria(materiaAux: Materia):
+    for i, materia in enumerate(lista_materias):
+        if materiaAux.nomeMateria.upper() == materia.nomeMateria.upper():
+            return i
+    return -1
+
+async def pegarMateriasDeletadas(message, materias):
+    manterPergunta = True
+    while manterPergunta:
+        emoji = await perguntar(message, "Deseja remover uma materia")
+        deseja = emoji_to_boolean(emoji)
+        if deseja:
+            strPergunta, opcoesAtuais = perguntaMateria()
+            materiaEmoji = await perguntar(message, strPergunta, opcoesAtuais)
+            materiaAtual = unicode_to_number(materiaEmoji)
+            print(materiaAtual)
+            materiaObj = materias[int(materiaAtual)]
+            indice = pegarIndiceMateria(materiaObj)
+            del lista_materias[indice]
+        else:
+            manterPergunta = False
+
 async def perguntarConteudo(message):
     manterPergunta = True
     listaConteudos: list[str] = []
@@ -67,7 +93,6 @@ async def perguntarConteudo(message):
             listaConteudos.append(respostaConteudo)
         else:
             manterPergunta = False
-    
     return listaConteudos
 
 
@@ -220,6 +245,48 @@ async def on_message(message):
             return
         await message.channel.send(msg)
 
+    if message.content.startswith('>RemoverMateria'):
+       await pegarMateriasDeletadas(message, lista_materias) 
+
+    if message.content.startswith('>EditarProva'):
+        strPerguntas, opcoesAtuais = perguntaMateria()
+        materia = await perguntar(message, strPerguntas, opcoesAtuais)
+        materiaIndex = unicode_to_number(materia)
+        materiaObj = lista_materias[int(materiaIndex)]
+        nomeProva = await perguntar_texto(message, "Qual o nome da prova?")
+        prova = materiaObj.procurarProva(nomeProva)
+        if not prova:
+            await message.channel.send("Prova não existe")
+            return
+        opcoesAtuais = ('📅', '🔢', '🔟', '🔤', '📦')
+        strPerguntas = "Qual atributo voce quer editar ?\n"
+        for i in opcoesAtuais:
+            match i:
+                case '📅':
+                    strPerguntas += f'{i} - Data\n'
+                case '🔢':
+                    strPerguntas += f'{i} - Unidade\n'
+                case '🔟':
+                    strPerguntas += f'{i} - Nota\n'
+                case '🔤':
+                    strPerguntas += f'{i} - Nome\n'
+                case '📦':
+                    strPerguntas += f'{i} - Conteudos\n'
+            
+        emoji = await perguntar(message, strPerguntas,('📅', '🔢', '🔟', '🔤', '📦'))
+        if emoji == '🔢':
+            unidade = await perguntar(message, "Escolha a unidade da prova", ("1️⃣","2️⃣","3️⃣","4️⃣"))
+            
+            pass
+        elif emoji == '📦':
+            conteudos = await perguntarConteudo()
+            prova.editarConteudo(conteudos)
+            pass
+        else:
+            pass
+
+
+    
     if message.content.startswith('>Miguez'):
         comp = bot.get_guild(677252577611612170)
         miguez = comp.get_member(204386578414436352)

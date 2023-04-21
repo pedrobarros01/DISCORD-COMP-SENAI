@@ -3,7 +3,7 @@ class Prova:
         self.unidade: str = unidade
         self.data: str = data
         self.nomeProva: str = nomeProva
-        self.notaProva: float =notaProva
+        self.notaProva: float = notaProva
         self.conteudos: list[str] = []
     
     def adicionarConteudo(self, conteudo: str):
