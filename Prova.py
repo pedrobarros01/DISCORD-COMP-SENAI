@@ -17,6 +17,8 @@ class Prova:
     def adicionarUnicoConteudo(self, conteudo: str):
         self.conteudos.append(conteudo)
 
+    def setConteudos(self, conteudos: list[str]):
+        self.conteudos = conteudos
     
     def printarProva(self):
         msg = ''
@@ -29,5 +31,8 @@ class Prova:
         for conteudo in self.conteudos:
             msg += (f'\t**->{conteudo}**\n')
         return msg
+    
+    def to_dict(self):
+        return {'unidade': self.unidade, 'data': self.data, 'nomeProva': self.nomeProva, 'notaProva': self.notaProva, 'conteudos': [conteudo for conteudo in self.conteudos]}
 
         

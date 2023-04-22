@@ -5,10 +5,12 @@ from discord.ext import commands
 import json
 from dotenv import dotenv_values
 from random import randint
+from Prova import Prova
 config = dotenv_values(".env")
 intents = discord.Intents.all()
 bot = commands.Bot(">", intents=intents)
 lista_materias: list[Materia] = []
+
 def removerMateria():
     
     pass
@@ -182,8 +184,7 @@ async def on_message(message):
     if message.author == bot.user:
         return
     if message.content.lower().startswith('>addmateria'):
-        materia = message.content.split('>AddMateria')[1]
-        materia = materia.split(' ')[1]
+        materia =  await perguntar_texto(message, "Por favor digite o nome da matéria:")
         materiaObj = Materia(materia)
         tem = Materia.buscarMateria(lista_materias, materiaObj.nomeMateria)
         if tem:
@@ -280,6 +281,28 @@ async def on_message(message):
             await message.channel.send(msg)
             return
         await message.channel.send(msg)
+
+    if message.content.lower().startswith('>salvar'):
+        with open('dados.json', 'w') as f:
+            table = []
+            for materias in lista_materias:
+                table.append(materias.to_dict())
+            json.dump(table, f)
+
+    if message.content.lower().startswith('>carregar'):
+       with open('dados.json', 'r') as f:
+           table = json.load(f)
+           provas = []
+           provaObj = None
+           for obj in table:
+               for prova in obj['provas']:
+                   provaObj = Prova(unidade=prova['nomeProva'], data=prova['data'], nomeProva=prova['nomeProva'], notaProva=prova['notaProva'])
+                   provaObj.setConteudos(prova['conteudos'])
+                   provas.append(provaObj)
+               materia = Materia(obj['nomeMateria'])
+               materia.setProvas(provas)
+               lista_materias.append(materia)
+
 
     if message.content.lower().startswith('>removerMateria'):
        await pegarMateriasDeletadas(message, lista_materias) 

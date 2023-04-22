@@ -10,6 +10,9 @@ class Materia:
         self.nomeMateria: str = nomeMateria
         self.provas: list[Prova] | None = []
     
+    def setProvas(self, provas):
+        self.provas = provas
+
     @classmethod
     def buscarMateria(cls, materias: list[Self], materia: str) -> Self | None:
         for mat in materias:
@@ -82,6 +85,9 @@ class Materia:
                 return False, "Nao conseguimos remover as provas"
         return True, "Todas as provas removidas com sucesso"
     
+    def to_dict(self):
+        return {'nomeMateria': self.nomeMateria, 'provas': [prova.to_dict() for prova in self.provas]}
+        pass
     
 
     
