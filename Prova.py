@@ -8,13 +8,14 @@ class Prova:
     
     def adicionarConteudo(self, conteudo: str):
         conteudoSplitado = conteudo.split(',')
+        conteudoSplitado = filter(lambda x: x != '' and x != " ", conteudoSplitado)
         self.conteudos.extend(conteudoSplitado)
     
     def removerConteudo(self, conteudo: str):
         self.conteudos.remove(conteudo)
     
-    def editarConteudo(self, conteudos: list[str]):
-        self.conteudos = conteudos
+    def adicionarUnicoConteudo(self, conteudo: str):
+        self.conteudos.append(conteudo)
 
     
     def printarProva(self):
@@ -24,6 +25,7 @@ class Prova:
         msg += (f'NomeProva: {self.nomeProva}\n')
         msg += (f'Notaprova: {self.notaProva}\n')
         msg += (f'**Data**: {self.data}\n')
+        msg += (f'**Conteudos:**\n')
         for conteudo in self.conteudos:
             msg += (f'\t**->{conteudo}**\n')
         return msg
