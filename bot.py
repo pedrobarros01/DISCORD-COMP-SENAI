@@ -61,22 +61,6 @@ async def called_once_a_day():  # Fired every day
                     await channel.send(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é daqui a {checarData(prova.data)} dias")
     #await channel.send("This is a timed notification!")
 
-async def background_task():
-    now = datetime.utcnow()
-    if now.time() > WHEN:  # Make sure loop doesn't start after {WHEN} as then it will send immediately the first time as negative seconds will make the sleep yield instantly
-        tomorrow = datetime.combine(now.date() + timedelta(days=1), time(0))
-        seconds = (tomorrow - now).total_seconds()  # Seconds until tomorrow (midnight)
-        await asyncio.sleep(seconds)   # Sleep until tomorrow and then the loop will start 
-    while True:
-        now = datetime.utcnow() # You can do now() or a specific timezone if that matters, but I'll leave it with utcnow
-        target_time = datetime.combine(now.date(), WHEN)  # 6:00 PM today (In UTC)
-        seconds_until_target = (target_time - now).total_seconds()
-        await asyncio.sleep(seconds_until_target)  # Sleep until we hit the target time
-        await called_once_a_day()  # Call the helper function that sends the message
-        tomorrow = datetime.combine(now.date() + timedelta(days=1), time(0))
-        seconds = (tomorrow - now).total_seconds()  # Seconds until tomorrow (midnight)
-        await asyncio.sleep(seconds)   # Sleep until tomorrow and then the loop will start a new iteration
-
 def removerMateria():
     
     pass
@@ -245,10 +229,10 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-#    comp = bot.get_guild(int(config['COMP']))
-#    miguez = comp.get_member(int(config['MIGUEZ']))
-#    if message.author.id == miguez.id:
-#        await miguis(message, miguez)
+    comp = bot.get_guild(int(config['COMP']))
+    miguez = comp.get_member(int(config['MIGUEZ']))
+    if message.author.id == miguez.id:
+        await miguis(message, miguez)
     if message.author == bot.user:
         return
     if message.content.lower().startswith('>addmateria'):
