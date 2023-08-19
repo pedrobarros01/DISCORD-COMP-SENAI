@@ -2,7 +2,9 @@ import asyncio
 import discord
 from Materia import Materia
 from discord.ext import commands
+from datetime import datetime, time, timedelta
 import json
+from discord.ext import tasks
 from dotenv import dotenv_values
 from random import randint
 from Prova import Prova
@@ -10,6 +12,70 @@ config = dotenv_values(".env")
 intents = discord.Intents.all()
 bot = commands.Bot(">", intents=intents)
 lista_materias: list[Materia] = []
+
+def checarData(data):
+    data = data.split('/')
+    if len(data) == 2:
+        data.append(str(datetime.now().year))
+    elif len(data) != 3:
+        return False
+    
+    delta = datetime(day=int(data[0]), month=int(data[1]), year=int(data[2])) - datetime.now()
+    return delta.days + 1
+
+WHEN = time(19, 18, 40)  # 6:00 PM
+channel_id = 0 # CANAL DE AVISO DE PROVAS # bot.run(config['CANAL']) (?) #
+
+def carregar():
+    with open('dados.json', 'r') as f:
+        table = json.load(f)
+        provaObj = None
+        for obj in table:
+            provas = []
+            for prova in obj['provas']:
+                provaObj = Prova(unidade=prova['unidade'], data=prova['data'], nomeProva=prova['nomeProva'], notaProva=prova['notaProva'])
+                provaObj.setConteudos(prova['conteudos'])
+                provas.append(provaObj)
+            materia = Materia(obj['nomeMateria'])
+            materia.setProvas(provas)
+            lista_materias.append(materia)
+
+async def called_once_a_day():  # Fired every day
+    print("online")
+    await bot.wait_until_ready()  # Make sure your guild cache is ready so the channel can be found via get_channel
+    channel = bot.get_channel(channel_id) # Note: It's more efficient to do bot.get_guild(guild_id).get_channel(channel_id) as there's less looping involved, but just get_channel still works fine
+    print(len(lista_materias))
+    for materias in lista_materias:
+        if len(materias.provas) > 0:
+            for prova in materias.provas:
+                print(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é daqui a {checarData(prova.data)} dias")
+                if checarData(prova.data) == 1:
+                    await channel.send(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é amanhã")
+                elif checarData(prova.data) == 0:
+                    await channel.send(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é hoje")
+                elif checarData(prova.data) == 7:
+                    await channel.send(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é daqui a uma semana")
+                elif checarData(prova.data) == 14:
+                    await channel.send(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é daqui a duas semanas")
+                else:
+                    await channel.send(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é daqui a {checarData(prova.data)} dias")
+    #await channel.send("This is a timed notification!")
+
+async def background_task():
+    now = datetime.utcnow()
+    if now.time() > WHEN:  # Make sure loop doesn't start after {WHEN} as then it will send immediately the first time as negative seconds will make the sleep yield instantly
+        tomorrow = datetime.combine(now.date() + timedelta(days=1), time(0))
+        seconds = (tomorrow - now).total_seconds()  # Seconds until tomorrow (midnight)
+        await asyncio.sleep(seconds)   # Sleep until tomorrow and then the loop will start 
+    while True:
+        now = datetime.utcnow() # You can do now() or a specific timezone if that matters, but I'll leave it with utcnow
+        target_time = datetime.combine(now.date(), WHEN)  # 6:00 PM today (In UTC)
+        seconds_until_target = (target_time - now).total_seconds()
+        await asyncio.sleep(seconds_until_target)  # Sleep until we hit the target time
+        await called_once_a_day()  # Call the helper function that sends the message
+        tomorrow = datetime.combine(now.date() + timedelta(days=1), time(0))
+        seconds = (tomorrow - now).total_seconds()  # Seconds until tomorrow (midnight)
+        await asyncio.sleep(seconds)   # Sleep until tomorrow and then the loop will start a new iteration
 
 def removerMateria():
     
@@ -174,13 +240,15 @@ def join_conteudos(conteudos: list[str]):
 @bot.event
 async def on_ready():
     print(f'Estou pronto -> {bot.user}')
+    lembrete.start()
+    carregar()
 
 @bot.event
 async def on_message(message):
-    comp = bot.get_guild(int(config['COMP']))
-    miguez = comp.get_member(int(config['MIGUEZ']))
-    if message.author.id == miguez.id:
-        await miguis(message, miguez)
+#    comp = bot.get_guild(int(config['COMP']))
+#    miguez = comp.get_member(int(config['MIGUEZ']))
+#    if message.author.id == miguez.id:
+#        await miguis(message, miguez)
     if message.author == bot.user:
         return
     if message.content.lower().startswith('>addmateria'):
@@ -290,18 +358,7 @@ async def on_message(message):
             json.dump(table, f)
 
     if message.content.lower().startswith('>carregar'):
-       with open('dados.json', 'r') as f:
-           table = json.load(f)
-           provas = []
-           provaObj = None
-           for obj in table:
-               for prova in obj['provas']:
-                   provaObj = Prova(unidade=prova['nomeProva'], data=prova['data'], nomeProva=prova['nomeProva'], notaProva=prova['notaProva'])
-                   provaObj.setConteudos(prova['conteudos'])
-                   provas.append(provaObj)
-               materia = Materia(obj['nomeMateria'])
-               materia.setProvas(provas)
-               lista_materias.append(materia)
+       carregar()
 
 
     if message.content.lower().startswith('>removerMateria'):
@@ -400,8 +457,24 @@ async def on_message(message):
         msg = Materia.printarMaterias(lista_materias)
         await message.channel.send(msg)
     '''if message.content.lower().startswith('>miguez'):
-        comp = bot.get_guild(991739407314984990)
+        comp = bot.get_guild(991739407314984990)s
         miguez = comp.get_member(796901549506166864)
         await miguez.kick()'''
+
+def seconds_until(hours, minutes):
+    given_time = datetime.time(hours, minutes)
+    now = datetime.datetime.now()
+    future_exec = datetime.datetime.combine(now, given_time)
+    if (future_exec - now).days < 0:  # If we are past the execution, it will take place tomorrow
+        future_exec = datetime.datetime.combine(now + datetime.timedelta(days=1), given_time) # days always >= 0
+
+    return (future_exec - now).total_seconds()
+
+@tasks.loop(minutes=35)
+async def lembrete():
+    if datetime.now().hour == 20:
+        await called_once_a_day()
+
+
 
 bot.run(config['TOKEN'])
