@@ -2,17 +2,17 @@ import asyncio
 import discord
 from Materia import Materia
 from discord.ext import commands
-from datetime import datetime, time, timedelta
 import json
+from datetime import datetime, time
 from discord.ext import tasks
-from dotenv import dotenv_values
 from random import randint
 from Prova import Prova
-config = dotenv_values(".env")
+from config import config
+
 intents = discord.Intents.all()
 bot = commands.Bot(">", intents=intents)
-lista_materias: list[Materia] = []
 
+lista_materias: list[Materia] = []
 def checarData(data):
     data = data.split('/')
     if len(data) == 2:
@@ -24,26 +24,15 @@ def checarData(data):
     return delta.days + 1
 
 WHEN = time(19, 18, 40)  # 6:00 PM
-channel_id = 0 # CANAL DE AVISO DE PROVAS # bot.run(config['CANAL']) (?) #
+channel_id = config['aviso'] # CANAL DE AVISO DE PROVAS # bot.run(config['CANAL']) (?) #
 
-def carregar():
-    with open('dados.json', 'r') as f:
-        table = json.load(f)
-        provaObj = None
-        for obj in table:
-            provas = []
-            for prova in obj['provas']:
-                provaObj = Prova(unidade=prova['unidade'], data=prova['data'], nomeProva=prova['nomeProva'], notaProva=prova['notaProva'])
-                provaObj.setConteudos(prova['conteudos'])
-                provas.append(provaObj)
-            materia = Materia(obj['nomeMateria'])
-            materia.setProvas(provas)
-            lista_materias.append(materia)
+
 
 async def called_once_a_day():  # Fired every day
     print("online")
     await bot.wait_until_ready()  # Make sure your guild cache is ready so the channel can be found via get_channel
     channel = bot.get_channel(channel_id) # Note: It's more efficient to do bot.get_guild(guild_id).get_channel(channel_id) as there's less looping involved, but just get_channel still works fine
+    await channel.send(f"Alarme iniciado")
     print(len(lista_materias))
     for materias in lista_materias:
         if len(materias.provas) > 0:
@@ -62,7 +51,6 @@ async def called_once_a_day():  # Fired every day
     #await channel.send("This is a timed notification!")
 
 def removerMateria():
-    
     pass
 
 def emoji_to_boolean(emoji):
@@ -172,10 +160,11 @@ async def perguntarConteudo(message):
             manterPergunta = False
     return listaConteudos
 
-
+async def alarmeProvas():
+    pass
 
 async def miguis(message, miguez):
-    emoji = '🤡'
+    emoji = '<:miguezjoker:821111485564452944>'
     await message.add_reaction(emoji)
 
 async def perguntar(mensagem, nome, opcoes: tuple[str]=('👍', '👎')):
@@ -224,17 +213,137 @@ def join_conteudos(conteudos: list[str]):
 @bot.event
 async def on_ready():
     print(f'Estou pronto -> {bot.user}')
-    lembrete.start()
-    carregar()
+
+@bot.group(invoke_without_command=True)
+async def ajuda(ctx):
+    em = discord.Embed(title="Ajuda", description="Use >ajuda <extend> para extender a syntax de um comando", color=ctx.author.color)
+    em.add_field(name="Prova", value="`addprova`\n`addconteudo`\n `addmateria`\n `editarprova`\n `removermateria`\n`removerprova`\n `removertodasasprovas`\n `printarprovas`\n `salvar`\n `carregar`\n")
+    em.add_field(name="Extras", value="`miguez`\n `rafik`\n `lipao`\n `nandin`")
+    await ctx.send(embed=em)
+
+@ajuda.command()
+async def pararalarme(ctx):
+    em = discord.Embed(title="Parar Alarme", description="Para o alarme", color=ctx.author.color)
+    em.add_field(name="**Sintaxe**", value=">pararalarme")
+    await ctx.send(embed=em)
+
+@ajuda.command()
+async def alarme(ctx):
+    em = discord.Embed(title="Alarme", description="Inicia o alarme das provas, todo dia as 20 horas ele pinga quantos dias faltam", color=ctx.author.color)
+    em.add_field(name="**Sintaxe**", value=">alarme")
+    await ctx.send(embed=em)
+
+@ajuda.command()
+async def addprova(ctx):
+    em = discord.Embed(title="AddProva", description="Adiciona uma prova em alguma materia", color=ctx.author.color)
+    em.add_field(name="**Sintaxe**", value=">addprova") 
+    await ctx.send(embed=em)
+
+@ajuda.command()
+async def addconteudo(ctx):
+    em = discord.Embed(title="AddConteudo", description="Adiciona uma lista de conteudos numa prova de uma materia", color=ctx.author.color)  
+    em.add_field(name="**Sintaxe**", value=">addconteudo")
+    await ctx.send(embed=em)
+
+@ajuda.command()
+async def addmateria(ctx):
+    em = discord.Embed(title="AddMateria", description="Adiciona uma nova materia", color=ctx.author.color)
+    em.add_field(name="**Sintaxe**", value=">addmateria")
+    await ctx.send(embed=em)
+
+@ajuda.command()
+async def editarprova(ctx):
+    em = discord.Embed(title="EditarProva", description="Edite os atributos(nota, data, nome, conteudos, unidade) de uma prova", color=ctx.author.color)
+    em.add_field(name="**Sintaxe**", value=">editarProva")
+    await ctx.send(embed=em)
+
+@ajuda.command()
+async def removermateria(ctx):
+    em = discord.Embed(title="RemoverMateria", description="Remove uma materia da lista de materias", color=ctx.author.color)
+    em.add_field(name="**Sintaxe**", value=">removerMateria")
+    await ctx.send(embed=em)
+
+@ajuda.command()
+async def removerprova(ctx):
+    em = discord.Embed(title="RemoverProva", description="Remove uma prova de uma materia", color=ctx.author.color)
+    em.add_field(name="**Sintaxe**", value=">removerprova")
+    await ctx.send(embed=em)
+
+@ajuda.command()
+async def removertodasasprovas(ctx):
+    em = discord.Embed(title="RemoverTodasAsProvas", description="Remove todas as provas de uma materia", color=ctx.author.color)
+    em.add_field(name="**Sintaxe**", value=">removertodasasprovas")
+    await ctx.send(embed=em)
+
+@ajuda.command()
+async def printarprovas(ctx):
+    em = discord.Embed(title="PrintarProvas", description="Lista as provas de todas as materias", color=ctx.author.color)
+    em.add_field(name="**Sintaxe**", value=">printarprovas")
+    await ctx.send(embed=em)
+
+@ajuda.command()
+async def salvar(ctx):
+    em = discord.Embed(title="Salvar", description="Salva a lista de materias num JSON", color=ctx.author.color)
+    em.add_field(name="**Sintaxe**", value=">salvar")
+    await ctx.send(embed=em)
+
+@ajuda.command()
+async def carregar(ctx):
+    em = discord.Embed(title="Carregar", description="Carrega a lista de materias de um JSON", color=ctx.author.color)
+    em.add_field(name="**Sintaxe**", value=">carregar")
+    await ctx.send(embed=em)
+
+@ajuda.command()
+async def miguez(ctx):
+    em = discord.Embed(title="Miguez", description="Xingue Miguez", color=ctx.author.color)
+    em.add_field(name="**Sintaxe**", value=">miguez")
+    await ctx.send(embed=em)
+
+@ajuda.command()
+async def rafik(ctx):
+    em = discord.Embed(title="Rafik", description="Só o Básico",color=ctx.author.color)
+    em.add_field(name="**Sintaxe**", value=">rafik")
+    await ctx.send(embed=em)
+
+@ajuda.command()
+async def lipao(ctx):
+    em = discord.Embed(title="Lipao", description="HeteroTop, Maromba, Popó da nova geração", color=ctx.author.color)
+    em.add_field(name="**Sintaxe**", value=">lipao")
+    await ctx.send(embed=em)
+
+@ajuda.command()
+async def nandin(ctx):
+    em = discord.Embed(title="Nandin", description="Laranja inutil", color=ctx.author.color)
+    em.add_field(name="**Sintaxe**", value=">nandin")
+    await ctx.send(embed=em)
 
 @bot.event
 async def on_message(message):
     comp = bot.get_guild(int(config['COMP']))
     miguez = comp.get_member(int(config['MIGUEZ']))
+    nandin = comp.get_member(int(config['NANDIN']))
+    lipao = comp.get_member(int(config['LIPAO']))
+    lion = comp.get_member(int(config['LION']))
+    rafik = comp.get_member(int(config['RAFIK']))
+    #drungas = comp.get_member(int(config['DRUNGAS']))
     if message.author.id == miguez.id:
-        await miguis(message, miguez)
+        chance = randint(1,10)
+        if chance == 1:
+            await miguis(message, miguez)
     if message.author == bot.user:
         return
+    if message.content.lower().startswith('>pararalarme'):
+        lembrete.stop()
+        await message.channel.send('Alarme foi parado')
+    if message.content.lower().startswith('>alarme'):
+        lembrete.start()
+    if message.content.lower().startswith('>nandin'):
+        await message.channel.send(f'Esse é o laranjinha ?{nandin.mention}KKKKKKKKKKKKKKKK. Muito idiota!')
+    if message.content.lower().startswith('>lipao'):
+        await message.channel.send(f'{lipao.mention} Cada dia que passa, eu fico mais decepcionado com voce. Olhe a porra do wpp mermao !')
+        await message.channel.send('E nem adianta vc pedir pra ir na mão, vc é um fracote que nao merece meu tempo!')
+    if message.content.lower().startswith('>rafik'):
+        await message.channel.send(F"{rafik.mention} Só o Básico!")
     if message.content.lower().startswith('>addmateria'):
         materia =  await perguntar_texto(message, "Por favor digite o nome da matéria:")
         materiaObj = Materia(materia)
@@ -279,10 +388,6 @@ async def on_message(message):
             await message.channel.send(operacaoConcluida[1])
             return
         await message.channel.send(operacaoConcluida[1])
-
-    if message.content.lower().startswith('>yn'):
-        resposta = await perguntar_texto(message, "Pergunta exemplo")
-        print(resposta)
 
     if message.content.lower().startswith('>addconteudo'):
 
@@ -340,10 +445,22 @@ async def on_message(message):
             for materias in lista_materias:
                 table.append(materias.to_dict())
             json.dump(table, f)
+        await message.channel.send('Salvado com sucesso')
 
     if message.content.lower().startswith('>carregar'):
-       carregar()
-
+       with open('dados.json', 'r') as f:
+        table = json.load(f)
+        provaObj = None
+        for obj in table:
+            provas = []
+            for prova in obj['provas']:
+                provaObj = Prova(unidade=prova['unidade'], data=prova['data'], nomeProva=prova['nomeProva'], notaProva=prova['notaProva'])
+                provaObj.setConteudos(prova['conteudos'])
+                provas.append(provaObj)
+            materia = Materia(obj['nomeMateria'])
+            materia.setProvas(provas)
+            lista_materias.append(materia)
+       await message.channel.send('Carregado com sucesso')
 
     if message.content.lower().startswith('>removerMateria'):
        await pegarMateriasDeletadas(message, lista_materias) 
@@ -421,29 +538,14 @@ async def on_message(message):
             prova.nomeProva= nome
             await message.channel.send("Nome atualizado")
 
-
-    
     if message.content.lower().startswith('>miguez'):
-        comp = bot.get_guild(677252577611612170)
-        miguez = comp.get_member(204386578414436352)
         await message.channel.send(f'{miguez.mention} podre!')
-    
-    if message.content.lower().startswith(">ajuda") or message.content.lower().startswith(">help"):
-        await message.channel.send("""```>ajuda; >help
->AddProva
->EditarProva
->AddMateria
->AddConteudo
->RemoverMateria 
->Miguez```""")
     
     if message.content.lower().startswith('>printarprovas'):
         msg = Materia.printarMaterias(lista_materias)
         await message.channel.send(msg)
-    '''if message.content.lower().startswith('>miguez'):
-        comp = bot.get_guild(991739407314984990)s
-        miguez = comp.get_member(796901549506166864)
-        await miguez.kick()'''
+    
+    await bot.process_commands(message)
 
 def seconds_until(hours, minutes):
     given_time = datetime.time(hours, minutes)
@@ -454,11 +556,9 @@ def seconds_until(hours, minutes):
 
     return (future_exec - now).total_seconds()
 
-@tasks.loop(minutes=35)
+@tasks.loop(hours=1)
 async def lembrete():
     if datetime.now().hour == 20:
         await called_once_a_day()
-
-
 
 bot.run(config['TOKEN'])

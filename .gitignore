@@ -1,3 +1,5 @@
 __pycache__/
 modules/
 .env
+config.py
+discloud.config
