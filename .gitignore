@@ -3,3 +3,4 @@ modules/
 .env
 config.py
 discloud.config
+*.zip
