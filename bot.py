@@ -8,6 +8,7 @@ from discord.ext import tasks
 from random import randint
 from Prova import Prova
 from config import config
+import requests
 
 intents = discord.Intents.all()
 bot = commands.Bot(">", intents=intents)
@@ -81,6 +82,19 @@ def checarData(data):
 WHEN = time(19, 18, 40)  # 6:00 PM
 channel_id = config['aviso'] # CANAL DE AVISO DE PROVAS # bot.run(config['CANAL']) (?) #
 
+def pegarSalas(ra: str):
+    print(f'https://senaiweb.fieb.org.br/MinhaAula/api/aulas?ra={ra}')
+    headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0",
+    "Accept-Encoding": "*",
+    "Connection": "keep-alive"
+    }
+    req = requests.get(f'https://senaiweb.fieb.org.br/MinhaAula/api/aulas?ra={ra}', headers=headers)
+    data = req.json()
+    string = ''
+    for aula in data:
+        string += f"->Aula: {aula['disciplina']}\n->Predio: {aula['predio']}\n->Andar: {aula['bloco']}\n->Sala: {aula['sala']}\n---------------------\n"
+    return string
 
 
 async def called_once_a_day():  # Fired every day
@@ -272,7 +286,7 @@ async def on_ready():
 @bot.group(invoke_without_command=True)
 async def ajuda(ctx):
     em = discord.Embed(title="Ajuda", description="Use >ajuda <extend> para extender a syntax de um comando", color=ctx.author.color)
-    em.add_field(name="Prova", value="`pararalarme`\n  `alarme`\n  `saberpassou`\n `addprova`\n`addconteudo`\n `addmateria`\n `editarprova`\n `removermateria`\n`removerprova`\n `removertodasasprovas`\n `printarprovas`\n `salvar`\n `carregar`\n")
+    em.add_field(name="Prova", value="`pararalarme`\n  `alarme`\n  `saberpassou`\n `addprova`\n`addconteudo`\n `addmateria`\n `editarprova`\n `removermateria`\n`removerprova`\n `removertodasasprovas`\n `printarprovas`\n `salvar`\n `carregar`\n `aula`\n")
     em.add_field(name="Extras", value="`miguez`\n `rafik`\n `lipao`\n `nandin`")
     await ctx.send(embed=em)
 
@@ -353,6 +367,12 @@ async def salvar(ctx):
 async def carregar(ctx):
     em = discord.Embed(title="Carregar", description="Carrega a lista de materias de um JSON", color=ctx.author.color)
     em.add_field(name="**Sintaxe**", value=">carregar")
+    await ctx.send(embed=em)
+
+@ajuda.command()
+async def aula(ctx):
+    em = discord.Embed(title="Aula", description="Verifique onde vai ser sua aula", color=ctx.author.color)
+    em.add_field(name="**Sintaxe**", value=">aula")
     await ctx.send(embed=em)
 
 @ajuda.command()
@@ -606,6 +626,12 @@ async def on_message(message):
     if message.content.lower().startswith('>printarprovas'):
         msg = Materia.printarMaterias(lista_materias)
         await message.channel.send(msg)
+    
+    if message.content.lower().startswith('>aula'):
+        ra =  await perguntar_texto(message, "Digite seu RA(com ponto):")
+        print(ra)
+        aulas = pegarSalas(ra)
+        await message.channel.send(aulas)
     
     if message.content.lower().startswith('>saberpassou'):
         av1 =  await perguntar_texto(message, "Digite media av1:")
