@@ -79,6 +79,20 @@ def checarData(data):
     delta = datetime(day=int(data[0]), month=int(data[1]), year=int(data[2])) - datetime.now()
     return delta.days + 1
 
+def saber_se_data_prova_ja_passou(data):
+    data = data.split('/')
+    if len(data) == 3:
+        return False
+    if len(data) == 2:
+        data.append(str(datetime.now().year))
+
+    data_de_hoje = datetime.now()
+    data_prova = datetime(day=int(data[0]), month=int(data[1]), year=int(data[2]))
+    if data_de_hoje > data_prova:
+        return True
+    else:
+        return False
+
 WHEN = time(19, 18, 40)  # 6:00 PM
 channel_id = config['aviso'] # CANAL DE AVISO DE PROVAS # bot.run(config['CANAL']) (?) #
 
@@ -106,17 +120,18 @@ async def called_once_a_day():  # Fired every day
     for materias in lista_materias:
         if len(materias.provas) > 0:
             for prova in materias.provas:
-                print(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é daqui a {checarData(prova.data)} dias")
-                if checarData(prova.data) == 1:
-                    await channel.send(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é amanhã")
-                elif checarData(prova.data) == 0:
-                    await channel.send(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é hoje")
-                elif checarData(prova.data) == 7:
-                    await channel.send(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é daqui a uma semana")
-                elif checarData(prova.data) == 14:
-                    await channel.send(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é daqui a duas semanas")
-                else:
-                    await channel.send(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é daqui a {checarData(prova.data)} dias")
+                # print(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é daqui a {checarData(prova.data)} dias")
+                if not saber_se_data_prova_ja_passou(prova.data):
+                    if checarData(prova.data) == 1:
+                        await channel.send(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é amanhã")
+                    elif checarData(prova.data) == 0:
+                        await channel.send(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é hoje")
+                    elif checarData(prova.data) == 7:
+                        await channel.send(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é daqui a uma semana")
+                    elif checarData(prova.data) == 14:
+                        await channel.send(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é daqui a duas semanas")
+                    else:
+                        await channel.send(f"A prova de {prova.nomeProva} da matéria {materias.nomeMateria} é daqui a {checarData(prova.data)} dias")
     #await channel.send("This is a timed notification!")
 
 def removerMateria():
